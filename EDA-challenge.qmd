@@ -1,0 +1,135 @@
+---
+title: "EDA-challenge.qmd"
+format: pdf
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+d <- read_csv("C:/Users/britt/OneDrive/Documents/ADA/data-wrangling.csv")
+
+d_clean <- d %>%
+  filter(!is.na(DayLength_km) & !is.na(Move)) %>%
+  mutate(
+    log_DayLength = log(DayLength_km + 1),
+    log_Move = log(Move + 1)
+  )
+
+ggplot(d_clean, aes(x = log_Move, y = log_DayLength)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "blue") +
+  labs(x = "Log(Time Spent Moving)", y = "Log(Day Range Length)",
+       title = "Relationship Between Time Spent Moving and Distance Traveled") +
+  theme_minimal()
+
+ggplot(d_clean, aes(x = log_Move, y = log_DayLength)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "blue") +
+  labs(x = "Log(Time Spent Moving)", y = "Log(Day Range Length)",
+       title = "Relationship by Primate Family") +
+  facet_wrap(~ Family) +
+  theme_minimal()
+
+d_clean <- d %>%
+  filter(!is.na(DayLength_km) & !is.na(MeanGroupSize)) %>%
+  mutate(
+    log_DayLength = log(DayLength_km + 1),
+    log_GroupSize = log(MeanGroupSize + 1)
+  )
+
+ggplot(d_clean, aes(x = log_GroupSize, y = log_DayLength)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "blue") +
+  labs(x = "Log(Group Size)", y = "Log(Day Range Length)",
+       title = "Relationship Between Group Size and Distance Traveled") +
+  theme_minimal()
+
+ggplot(d_clean, aes(x = log_GroupSize, y = log_DayLength)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "blue") +
+  labs(x = "Log(Group Size)", y = "Log(Day Range Length)",
+       title = "Relationship by Primate Family") +
+  facet_wrap(~ Family) +
+  theme_minimal()
+
+d <- d %>%
+  mutate(Body_Size_Dimorphism = Body_mass_male_mean / Body_mass_female_mean)
+
+d_clean <- d %>%
+  filter(!is.na(Canine_Dimorphism) & !is.na(Body_Size_Dimorphism)) %>%
+  mutate(
+    log_CanineDimorphism = log(Canine_Dimorphism),
+    log_BodySizeDimorphism = log(Body_Size_Dimorphism)
+  )
+
+ggplot(d_clean, aes(x = log_BodySizeDimorphism, y = log_CanineDimorphism)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "blue") +
+  labs(x = "Log(Body Size Dimorphism)", y = "Log(Canine Dimorphism)",
+       title = "Relationship Between Body Size and Canine Dimorphism") +
+  theme_minimal()
+
+ggplot(d_clean, aes(x = log_BodySizeDimorphism, y = log_CanineDimorphism)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "blue") +
+  labs(x = "Log(Body Size Dimorphism)", y = "Log(Canine Dimorphism)",
+       title = "Relationship by Primate Family") +
+  facet_wrap(~ Family) +
+  theme_minimal()
+
+d$Fruit <- as.numeric(d$Fruit)
+d$Leaves <- as.numeric(d$Leaves)
+
+d <- d %>%
+  mutate(diet_strategy = case_when(
+    Fruit > 50 ~ "frugivore",
+    Leaves > 50 ~ "folivore",
+    !is.na(Fruit) & !is.na(Leaves) ~ "omnivore",
+    TRUE ~ NA_character_
+  ))
+
+d_clean <- d %>%
+  filter(!is.na(diet_strategy) & !is.na(MeanGroupSize))
+
+ggplot(d_clean, aes(x = diet_strategy, y = MeanGroupSize, fill = diet_strategy)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(x = "Diet Strategy", y = "Group Size", 
+       title = "Group Size Across Different Dietary Strategies") +
+  theme_minimal() +
+  scale_fill_manual(values = c("frugivore" = "red", "folivore" = "green", "omnivore" = "blue"))
+
+wilcox.test(MeanGroupSize ~ diet_strategy, 
+            data = d_clean %>% filter(diet_strategy %in% c("frugivore", "folivore")), 
+            exact = FALSE)
+
+d |> 
+  mutate(Binomial = paste(Genus, Species, sep = "_")) |> 
+  select(Binomial, Family, Brain_Size_Species_Mean, Body_mass_male_mean) |> 
+  group_by(Family) |> 
+  summarise(across(c(Brain_Size_Species_Mean, Body_mass_male_mean), ~ mean(.x, na.rm = TRUE))) |> 
+  arrange(Brain_Size_Species_Mean)
+```
